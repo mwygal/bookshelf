@@ -1021,7 +1021,7 @@ function requestToken() {
 function createPicker() {
   const view = new google.picker.DocsView()
     .setIncludeFolders(true)
-    .setMimeTypes('application/epub+zip,audio/mp4,audio/x-m4b,audio/mpeg,audio/aac,audio/mp4a-latm')
+    .setMimeTypes('application/epub+zip,audio/mp4,audio/x-m4b,audio/mpeg,audio/aac,audio/mp4a-latm,video/mp4,application/octet-stream')
     .setMode(google.picker.DocsViewMode.LIST);
 
   const picker = new google.picker.PickerBuilder()
