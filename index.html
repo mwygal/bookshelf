@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookshelf</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --ink: #1a1814;
+    --ink-muted: #6b6660;
+    --ink-faint: #b0aca6;
+    --paper: #faf8f4;
+    --paper-warm: #f3f0e8;
+    --paper-card: #ffffff;
+    --accent: #8b5e3c;
+    --accent-light: #f0e8df;
+    --accent-dark: #5c3d25;
+    --border: #e2ddd6;
+    --shadow: rgba(26,24,20,0.08);
+    --reader-bg: #f9f6ef;
+    --reader-text: #2c2820;
+    --serif: 'Lora', Georgia, serif;
+    --sans: 'DM Sans', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- SETUP BANNER ---- */
+  #setup-banner {
+    background: #fff8f0;
+    border-bottom: 1px solid #f0d8b8;
+    padding: 0.85rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.82rem;
+    color: #7a4f20;
+  }
+  #setup-banner a { color: var(--accent-dark); font-weight: 500; }
+  #setup-banner.hidden { display: none; }
+
+  .setup-icon { font-size: 1rem; flex-shrink: 0; }
+
+  /* ---- CONFIG MODAL ---- */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,24,20,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-backdrop.active { display: flex; }
+
+  .modal {
+    background: var(--paper-card);
+    border-radius: 14px;
+    padding: 2rem;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 24px 60px rgba(26,24,20,0.18);
+  }
+
+  .modal h2 {
+    font-family: var(--serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--ink);
+  }
+
+  .modal p {
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .modal label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.4rem;
+  }
+
+  .modal input[type="text"] {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: var(--ink);
+    background: var(--paper);
+    margin-bottom: 1rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .modal input[type="text"]:focus { border-color: var(--accent); }
+
+  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
+
+  .modal-note {
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    background: var(--paper-warm);
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+  }
+
+  /* ---- BUTTONS ---- */
+  .btn {
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.55rem 1.1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    letter-spacing: 0.01em;
+    border: 1px solid var(--border);
+    background: var(--paper-card);
+    color: var(--ink);
+  }
+  .btn:hover { background: var(--paper-warm); border-color: var(--ink-faint); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-icon { display: flex; align-items: center; gap: 0.4rem; }
+
+  /* ---- HOME VIEW ---- */
+  #home-view { padding: 3rem 2rem; max-width: 900px; margin: 0 auto; width: 100%; }
+
+  .home-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent-dark);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--ink-muted); font-weight: 400; font-style: italic; font-size: 0.9em; }
+
+  .header-actions { display: flex; gap: 0.75rem; align-items: center; }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ---- SOURCE BUTTONS ---- */
+  .source-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .source-card {
+    flex: 1;
+    min-width: 180px;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .source-card:hover { border-color: var(--accent); background: var(--accent-light); transform: translateY(-1px); }
+
+  .source-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+  }
+  .source-card-icon.drive { background: #e8f4fd; }
+  .source-card-icon.local { background: var(--paper-warm); }
+
+  .source-card h3 { font-size: 0.9rem; font-weight: 500; color: var(--ink); }
+  .source-card p { font-size: 0.75rem; color: var(--ink-muted); line-height: 1.4; }
+
+  /* ---- LIBRARY GRID ---- */
+  .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1.25rem; }
+
+  .book-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    position: relative;
+  }
+  .book-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 6px 20px var(--shadow); }
+
+  .book-card-menu {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .book-card:hover .book-card-menu { opacity: 1; }
+
+  .remove-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(26,24,20,0.55);
+    border: none;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    line-height: 1;
+    transition: background 0.15s;
+  }
+  .remove-btn:hover { background: #c0392b; }
+
+  .book-spine {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .book-cover-img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+
+  .book-type-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-epub { background: #def0e8; color: #2a6645; }
+  .badge-audio { background: #fde8d4; color: #7a3d12; }
+  .badge-drive { background: #ddeefa; color: #1a5a8a; }
+
+  .book-info { padding: 0.75rem; border-top: 1px solid var(--border); }
+  .book-title {
+    font-family: var(--serif);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.35;
+    margin-bottom: 0.2rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .book-author { font-size: 0.72rem; color: var(--ink-muted); }
+
+  .empty-library { text-align: center; padding: 2rem; color: var(--ink-faint); font-size: 0.85rem; }
+
+  /* ---- READER SHELL ---- */
+  #reader-view { display: none; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  .reader-header {
+    padding: 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--paper-card);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .reader-title {
+    font-family: var(--serif);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--ink);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .font-controls { display: flex; align-items: center; gap: 0.5rem; }
+
+  .font-ctrl-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-muted);
+    transition: all 0.12s;
+  }
+  .font-ctrl-btn:hover { background: var(--paper-warm); color: var(--ink); }
+
+  /* ---- EPUB READER ---- */
+  .reader-body { flex: 1; display: flex; overflow: hidden; }
+
+  .toc-sidebar {
+    display: none;
+    width: 240px;
+    border-right: 1px solid var(--border);
+    background: var(--paper-card);
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .toc-sidebar.open { display: block; }
+
+  .toc-header {
+    padding: 1rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toc-item {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    line-height: 1.4;
+  }
+  .toc-item:hover { background: var(--paper-warm); color: var(--ink); }
+  .toc-item.active { color: var(--accent); background: var(--accent-light); }
+
+  #epub-content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 3rem 4rem;
+    background: var(--reader-bg);
+  }
+
+  #epub-content-area * {
+    font-family: var(--serif) !important;
+    font-size: 1.05rem !important;
+    line-height: 1.85 !important;
+    color: var(--reader-text) !important;
+  }
+  #epub-content-area h1, #epub-content-area h2, #epub-content-area h3 {
+    font-size: 1.3rem !important; font-weight: 600 !important;
+    margin: 1.5rem 0 0.75rem !important; line-height: 1.4 !important;
+  }
+  #epub-content-area p { margin-bottom: 1rem !important; }
+  #epub-content-area img { max-width: 100% !important; height: auto !important; border-radius: 6px; }
+
+  #epub-content-area.text-sm * { font-size: 0.9rem !important; }
+  #epub-content-area.text-md * { font-size: 1.05rem !important; }
+  #epub-content-area.text-lg * { font-size: 1.25rem !important; }
+  #epub-content-area.text-xl * { font-size: 1.45rem !important; }
+
+  #epub-content-area::-webkit-scrollbar { width: 4px; }
+  #epub-content-area::-webkit-scrollbar-track { background: transparent; }
+  #epub-content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .epub-nav {
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--paper-card);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+  .progress-info { font-size: 0.75rem; color: var(--ink-muted); min-width: 80px; text-align: center; }
+
+  /* ---- AUDIO PLAYER ---- */
+  #audio-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: var(--reader-bg);
+    overflow-y: auto;
+  }
+
+  .audio-art {
+    width: 200px; height: 200px;
+    border-radius: 12px;
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5rem;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    position: relative;
+  }
+  .audio-art img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+
+  .audio-book-title { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; color: var(--ink); margin-bottom: 0.4rem; text-align: center; }
+  .audio-book-author { font-size: 0.85rem; color: var(--ink-muted); margin-bottom: 2rem; text-align: center; }
+
+  .audio-progress-wrap { width: 100%; max-width: 500px; margin-bottom: 0.75rem; }
+
+  #audio-progress {
+    width: 100%; height: 4px;
+    -webkit-appearance: none; appearance: none;
+    background: var(--border); border-radius: 2px;
+    outline: none; cursor: pointer;
+  }
+  #audio-progress::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--accent); cursor: pointer;
+  }
+
+  .audio-times { width: 100%; max-width: 500px; display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--ink-muted); margin-bottom: 1.5rem; }
+
+  .audio-controls { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  .ctrl-btn { background: none; border: none; cursor: pointer; color: var(--ink-muted); display: flex; align-items: center; justify-content: center; transition: color 0.15s; padding: 0; }
+  .ctrl-btn:hover { color: var(--ink); }
+
+  #play-btn {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; color: white;
+  }
+  #play-btn:hover { background: var(--accent-dark); transform: scale(1.04); }
+
+  .speed-btn {
+    font-family: var(--sans); font-size: 0.75rem; font-weight: 500;
+    background: var(--paper-warm); border: 1px solid var(--border);
+    border-radius: 5px; padding: 0.3rem 0.6rem;
+    cursor: pointer; color: var(--ink-muted); transition: all 0.15s;
+  }
+  .speed-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .speed-btn.active { color: var(--accent); border-color: var(--accent); }
+
+  .chapter-list-wrap { width: 100%; max-width: 500px; margin-top: 1rem; }
+
+  .chapter-list-toggle {
+    font-size: 0.75rem; font-weight: 500; color: var(--ink-muted);
+    background: none; border: none; cursor: pointer; padding: 0;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .chapter-list-toggle:hover { color: var(--ink); }
+
+  #chapter-list {
+    display: none; margin-top: 0.75rem;
+    border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; background: var(--paper-card);
+    max-height: 220px; overflow-y: auto;
+  }
+
+  .chapter-item {
+    padding: 0.65rem 1rem; font-size: 0.8rem; color: var(--ink-muted);
+    cursor: pointer; border-bottom: 1px solid var(--border);
+    transition: background 0.1s; display: flex; align-items: center; gap: 0.75rem;
+  }
+  .chapter-item:last-child { border-bottom: none; }
+  .chapter-item:hover { background: var(--paper-warm); color: var(--ink); }
+  .chapter-item.active { color: var(--accent); font-weight: 500; background: var(--accent-light); }
+  .chapter-time { margin-left: auto; font-size: 0.7rem; color: var(--ink-faint); white-space: nowrap; }
+
+  /* ---- LOADING ---- */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(250,248,244,0.88); z-index: 100;
+    align-items: center; justify-content: center; flex-direction: column; gap: 1rem;
+  }
+  .loading-overlay.active { display: flex; }
+
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 0.85rem; color: var(--ink-muted); }
+
+  .hidden { display: none !important; }
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Opening book...</div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div class="modal-backdrop" id="config-modal">
+  <div class="modal">
+    <h2>Connect Google Drive</h2>
+    <p>Enter your Google API credentials to enable Drive browsing. You only need to do this once — they are saved in your browser.</p>
+    <div class="modal-note">
+      You will need an <strong>API Key</strong> and an <strong>OAuth Client ID</strong> from Google Cloud Console. See the setup guide included with this app for step-by-step instructions.
+    </div>
+    <label>API Key</label>
+    <input type="text" id="api-key-input" placeholder="AIza...">
+    <label>OAuth Client ID</label>
+    <input type="text" id="client-id-input" placeholder="123456789-abc....apps.googleusercontent.com">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeConfigModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveConfig()">Save & Connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="home-view">
+  <div style="background:var(--paper-card); border-bottom:1px solid var(--border); padding:1.25rem 2rem; display:flex; align-items:center; justify-content:space-between;">
+    <div class="logo">Bookshelf <span>personal library</span></div>
+    <button class="btn btn-icon" onclick="openConfigModal()" title="Configure Google Drive">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Drive settings
+    </button>
+  </div>
+
+  <!-- Setup banner -->
+  <div id="setup-banner">
+    <span class="setup-icon">⚙️</span>
+    <span>Google Drive is not configured yet. Click <strong>Drive settings</strong> above to connect, or use <strong>Open local file</strong> below to get started without Drive.</span>
+  </div>
+
+  <div style="max-width:900px; margin:0 auto; padding:2.5rem 2rem;">
+    <input type="file" id="file-input" accept=".epub,.m4b,.m4a,.mp3,.aac" multiple>
+
+    <div class="section-label" style="margin-bottom:1rem;">Add a book</div>
+    <div class="source-row">
+      <div class="source-card" id="drive-btn" onclick="openDrivePicker()">
+        <div class="source-card-icon drive">
+          <svg width="20" height="20" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg"><path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/><path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/><path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+        </div>
+        <h3>Open from Drive</h3>
+        <p>Browse your Google Drive and open any .epub or .m4b file directly</p>
+      </div>
+      <div class="source-card" onclick="document.getElementById('file-input').click()">
+        <div class="source-card-icon local">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5e3c" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
+        <h3>Open local file</h3>
+        <p>Pick a file from your computer — useful for testing or offline use</p>
+      </div>
+    </div>
+
+    <div class="section-label">Recent books</div>
+    <div class="library-grid" id="library-grid">
+      <div class="empty-library" id="empty-msg" style="grid-column:1/-1;">No books yet. Open one above to get started.</div>
+    </div>
+  </div>
+</div>
+
+<!-- READER -->
+<div id="reader-view">
+  <div class="reader-header">
+    <button class="btn btn-icon" onclick="closeReader()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Library
+    </button>
+    <div class="reader-title" id="reader-title"></div>
+    <div class="font-controls" id="font-controls" style="display:none">
+      <button class="font-ctrl-btn" onclick="adjustFont(-1)">A−</button>
+      <button class="font-ctrl-btn" onclick="adjustFont(1)">A+</button>
+      <button class="btn btn-icon" onclick="toggleToc()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+        Contents
+      </button>
+    </div>
+  </div>
+
+  <!-- EPUB -->
+  <div id="epub-reader" class="hidden" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+    <div class="reader-body">
+      <div class="toc-sidebar" id="toc-sidebar">
+        <div class="toc-header">Contents</div>
+        <div id="toc-list"></div>
+      </div>
+      <div id="epub-content-area" class="text-md"></div>
+    </div>
+    <div class="epub-nav">
+      <button class="btn btn-icon" onclick="epubPrev()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        Previous
+      </button>
+      <div class="progress-info" id="epub-progress">Chapter 1</div>
+      <button class="btn btn-icon" onclick="epubNext()">
+        Next
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- AUDIO -->
+  <div id="audio-player" class="hidden" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+    <div id="audio-container">
+      <div class="audio-art" id="audio-art">🎧</div>
+      <div class="audio-book-title" id="audio-title"></div>
+      <div class="audio-book-author" id="audio-author"></div>
+      <div class="audio-progress-wrap">
+        <input type="range" id="audio-progress" value="0" min="0" max="100" step="0.1">
+      </div>
+      <div class="audio-times">
+        <span id="current-time">0:00</span>
+        <span id="total-time">0:00</span>
+      </div>
+      <div class="audio-controls">
+        <button class="ctrl-btn" onclick="skip(-30)" title="Back 30s">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 2v6h6"/><path d="M5.2 15A9 9 0 1 0 6 8.7L2.5 8"/></svg>
+        </button>
+        <button id="play-btn" onclick="togglePlay()">
+          <svg id="play-icon" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+          <svg id="pause-icon" width="22" height="22" viewBox="0 0 24 24" fill="white" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="skip(30)" title="Forward 30s">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21.5 2v6h-6"/><path d="M18.8 15A9 9 0 1 1 18 8.7L21.5 8"/></svg>
+        </button>
+      </div>
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem;" id="speed-btns">
+        <button class="speed-btn" onclick="setSpeed(0.75, this)">0.75×</button>
+        <button class="speed-btn active" onclick="setSpeed(1, this)">1×</button>
+        <button class="speed-btn" onclick="setSpeed(1.25, this)">1.25×</button>
+        <button class="speed-btn" onclick="setSpeed(1.5, this)">1.5×</button>
+        <button class="speed-btn" onclick="setSpeed(2, this)">2×</button>
+      </div>
+      <div class="chapter-list-wrap">
+        <button class="chapter-list-toggle" id="chapter-toggle" onclick="toggleChapters()">▸ Chapters</button>
+        <div id="chapter-list"></div>
+      </div>
+    </div>
+    <audio id="audio-el" preload="metadata"></audio>
+  </div>
+</div>
+
+<!-- Google APIs -->
+<script src="https://apis.google.com/js/api.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+// ===================== CONFIG =====================
+let API_KEY = localStorage.getItem('bs_api_key') || '';
+let CLIENT_ID = localStorage.getItem('bs_client_id') || '';
+let accessToken = null;
+let pickerInited = false;
+let gapiInited = false;
+let tokenClient = null;
+
+const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+const MIME_EPUB = 'application/epub+zip';
+
+function updateSetupBanner() {
+  const banner = document.getElementById('setup-banner');
+  if (API_KEY && CLIENT_ID) banner.classList.add('hidden');
+  else banner.classList.remove('hidden');
+}
+updateSetupBanner();
+
+// ===================== CONFIG MODAL =====================
+function openConfigModal() {
+  document.getElementById('api-key-input').value = API_KEY;
+  document.getElementById('client-id-input').value = CLIENT_ID;
+  document.getElementById('config-modal').classList.add('active');
+}
+function closeConfigModal() { document.getElementById('config-modal').classList.remove('active'); }
+
+function saveConfig() {
+  API_KEY = document.getElementById('api-key-input').value.trim();
+  CLIENT_ID = document.getElementById('client-id-input').value.trim();
+  localStorage.setItem('bs_api_key', API_KEY);
+  localStorage.setItem('bs_client_id', CLIENT_ID);
+  closeConfigModal();
+  updateSetupBanner();
+  initGoogleApis();
+}
+
+// ===================== GOOGLE API INIT =====================
+function initGoogleApis() {
+  if (!API_KEY || !CLIENT_ID) return;
+  gapi.load('client:picker', async () => {
+    await gapi.client.init({ apiKey: API_KEY, discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    gapiInited = true;
+    pickerInited = true;
+  });
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (resp) => {
+      if (resp.error) { alert('Google sign-in failed: ' + resp.error); return; }
+      accessToken = resp.access_token;
+      createPicker();
+    }
+  });
+}
+
+// wait for GSI to load
+window.addEventListener('load', () => {
+  if (API_KEY && CLIENT_ID) {
+    // slight delay to let GSI script finish
+    setTimeout(initGoogleApis, 500);
+  }
+});
+
+// ===================== DRIVE PICKER =====================
+function openDrivePicker() {
+  if (!API_KEY || !CLIENT_ID) {
+    openConfigModal();
+    return;
+  }
+  if (!gapiInited) {
+    showLoading('Connecting to Google...');
+    const wait = setInterval(() => {
+      if (gapiInited) { clearInterval(wait); hideLoading(); requestToken(); }
+    }, 300);
+    setTimeout(() => { clearInterval(wait); hideLoading(); }, 8000);
+    return;
+  }
+  requestToken();
+}
+
+function requestToken() {
+  if (accessToken) { createPicker(); return; }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function createPicker() {
+  const view = new google.picker.DocsView()
+    .setIncludeFolders(true)
+    .setMimeTypes('application/epub+zip,audio/mp4,audio/x-m4b,audio/mpeg,audio/aac,audio/mp4a-latm')
+    .setMode(google.picker.DocsViewMode.LIST);
+
+  const picker = new google.picker.PickerBuilder()
+    .addView(view)
+    .setOAuthToken(accessToken)
+    .setDeveloperKey(API_KEY)
+    .setTitle('Choose a book')
+    .setCallback(pickerCallback)
+    .build();
+  picker.setVisible(true);
+}
+
+async function pickerCallback(data) {
+  if (data.action !== google.picker.Action.PICKED) return;
+  const file = data.docs[0];
+  showLoading('Loading from Drive...');
+  try {
+    const arrayBuffer = await fetchDriveFile(file.id, file.mimeType);
+    const blob = new Blob([arrayBuffer], { type: file.mimeType });
+    const fakeFile = new File([blob], file.name, { type: file.mimeType });
+    await handleFile(fakeFile, true);
+  } catch(e) {
+    hideLoading();
+    alert('Could not load file from Drive. ' + e.message);
+  }
+}
+
+async function fetchDriveFile(fileId, mimeType) {
+  const resp = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    { headers: { Authorization: 'Bearer ' + accessToken } }
+  );
+  if (!resp.ok) throw new Error('Drive fetch failed: ' + resp.status);
+  return resp.arrayBuffer();
+}
+
+// ===================== LOCAL FILE =====================
+document.getElementById('file-input').addEventListener('change', async e => {
+  for (const f of e.target.files) await handleFile(f, false);
+  e.target.value = '';
+});
+
+// ===================== FILE HANDLING =====================
+let library = JSON.parse(localStorage.getItem('bs_library') || '[]');
+
+async function handleFile(file, fromDrive) {
+  showLoading('Reading ' + file.name + '...');
+  const ext = file.name.split('.').pop().toLowerCase();
+  const entry = {
+    name: file.name,
+    type: ['epub'].includes(ext) ? 'epub' : 'audio',
+    title: '',
+    author: '',
+    cover: null,
+    fromDrive,
+    driveFileId: null,
+    dataURL: null
+  };
+
+  if (entry.type === 'epub') {
+    try {
+      const meta = await extractEpubMeta(file);
+      entry.title = meta.title || stripExt(file.name);
+      entry.author = meta.author || '';
+      entry.cover = meta.cover || null;
+    } catch { entry.title = stripExt(file.name); }
+  } else {
+    entry.title = stripExt(file.name);
+  }
+
+  entry.dataURL = await readAsDataURL(file);
+
+  // replace if same name
+  const idx = library.findIndex(b => b.name === file.name);
+  if (idx >= 0) library.splice(idx, 1);
+  library.unshift(entry);
+  saveLibrary();
+  hideLoading();
+  renderLibrary();
+  openBook(0);
+}
+
+// ===================== EPUB META =====================
+async function extractEpubMeta(file) {
+  const zip = await JSZip.loadAsync(file);
+  const parser = new DOMParser();
+  const containerXml = await zip.file('META-INF/container.xml').async('string');
+  const containerDoc = parser.parseFromString(containerXml, 'application/xml');
+  const opfPath = containerDoc.querySelector('rootfile').getAttribute('full-path');
+  const basePath = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+  const opfXml = await zip.file(opfPath).async('string');
+  const opfDoc = parser.parseFromString(opfXml, 'application/xml');
+  const title = opfDoc.querySelector('title')?.textContent || '';
+  const author = opfDoc.querySelector('creator')?.textContent || '';
+  let cover = null;
+  try {
+    const coverId = opfDoc.querySelector('meta[name="cover"]')?.getAttribute('content');
+    const coverItem = coverId
+      ? opfDoc.querySelector(`item[id="${coverId}"]`)
+      : opfDoc.querySelector('item[media-type^="image"]');
+    if (coverItem) {
+      const href = coverItem.getAttribute('href');
+      const coverFile = zip.file(basePath + href) || zip.file(href);
+      if (coverFile) cover = await blobToDataURL(await coverFile.async('blob'));
+    }
+  } catch(e) {}
+  return { title, author, cover };
+}
+
+// ===================== LIBRARY =====================
+function renderLibrary() {
+  const grid = document.getElementById('library-grid');
+  const empty = document.getElementById('empty-msg');
+  grid.querySelectorAll('.book-card').forEach(c => c.remove());
+  if (!library.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  library.forEach((book, idx) => {
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    const spineColor = book.type === 'epub' ? '#e8f4ec' : '#fef0e6';
+    const emoji = book.type === 'epub' ? '📖' : '🎧';
+    card.innerHTML = `
+      <div class="book-card-menu">
+        <button class="remove-btn" title="Remove from library" onclick="removeBook(event,${idx})">✕</button>
+      </div>
+      <div class="book-spine" style="background:${spineColor}">
+        ${book.cover ? `<img src="${book.cover}" class="book-cover-img" alt="">` : `<span style="font-size:2.5rem">${emoji}</span>`}
+        <span class="book-type-badge ${book.type==='epub'?'badge-epub':'badge-audio'}">${book.type==='epub'?'EPUB':'AUDIO'}</span>
+        ${book.fromDrive ? `<span class="book-type-badge badge-drive" style="top:auto;bottom:8px;">DRIVE</span>` : ''}
+      </div>
+      <div class="book-info">
+        <div class="book-title">${book.title}</div>
+        ${book.author ? `<div class="book-author">${book.author}</div>` : ''}
+      </div>
+    `;
+    card.addEventListener('click', (e) => { if (!e.target.closest('.remove-btn')) openBook(idx); });
+    grid.appendChild(card);
+  });
+}
+
+function removeBook(e, idx) {
+  e.stopPropagation();
+  library.splice(idx, 1);
+  saveLibrary();
+  renderLibrary();
+}
+
+renderLibrary();
+
+// ===================== READER STATE =====================
+let currentBook = null;
+let epubChapters = [];
+let epubCurrentIdx = 0;
+let fontSizeIdx = 1;
+const fontSizes = ['text-sm','text-md','text-lg','text-xl'];
+let tocOpen = false;
+let chaptersOpen = false;
+let audioChapters = [];
+const audio = document.getElementById('audio-el');
+
+// ===================== OPEN BOOK =====================
+async function openBook(idx) {
+  const book = library[idx];
+  currentBook = book;
+  showLoading('Opening ' + book.title + '...');
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('reader-view').style.display = 'flex';
+  document.getElementById('reader-title').textContent = book.title;
+
+  if (book.type === 'epub') {
+    document.getElementById('epub-reader').classList.remove('hidden');
+    document.getElementById('epub-reader').style.display = 'flex';
+    document.getElementById('audio-player').classList.add('hidden');
+    document.getElementById('font-controls').style.display = 'flex';
+    await loadEpub(book);
+  } else {
+    document.getElementById('audio-player').classList.remove('hidden');
+    document.getElementById('audio-player').style.display = 'flex';
+    document.getElementById('epub-reader').classList.add('hidden');
+    document.getElementById('font-controls').style.display = 'none';
+    loadAudio(book);
+  }
+  hideLoading();
+}
+
+// ===================== EPUB =====================
+async function loadEpub(book) {
+  const blob = dataURLToBlob(book.dataURL);
+  const zip = await JSZip.loadAsync(blob);
+  const parser = new DOMParser();
+  const containerXml = await zip.file('META-INF/container.xml').async('string');
+  const containerDoc = parser.parseFromString(containerXml, 'application/xml');
+  const opfPath = containerDoc.querySelector('rootfile').getAttribute('full-path');
+  const basePath = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
+  const opfXml = await zip.file(opfPath).async('string');
+  const opfDoc = parser.parseFromString(opfXml, 'application/xml');
+
+  const manifestItems = {};
+  opfDoc.querySelectorAll('item').forEach(item => {
+    manifestItems[item.getAttribute('id')] = { href: item.getAttribute('href'), type: item.getAttribute('media-type') };
+  });
+
+  const spineRefs = Array.from(opfDoc.querySelectorAll('itemref')).map(r => r.getAttribute('idref'));
+  epubChapters = [];
+
+  let ncxTitles = {};
+  const ncxId = opfDoc.querySelector('spine')?.getAttribute('toc');
+  if (ncxId && manifestItems[ncxId]) {
+    try {
+      const ncxXml = await zip.file(basePath + manifestItems[ncxId].href).async('string');
+      const ncxDoc = parser.parseFromString(ncxXml, 'application/xml');
+      ncxDoc.querySelectorAll('navPoint').forEach(np => {
+        const src = np.querySelector('content')?.getAttribute('src')?.split('#')[0];
+        const label = np.querySelector('navLabel text')?.textContent || '';
+        if (src) ncxTitles[src] = label;
+      });
+    } catch(e) {}
+  }
+
+  for (const idref of spineRefs) {
+    const item = manifestItems[idref];
+    if (!item || !item.type?.includes('html')) continue;
+    try {
+      const html = await zip.file(basePath + item.href).async('string');
+      const doc = parser.parseFromString(html, 'text/html');
+      for (const img of doc.querySelectorAll('img')) {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('data:')) {
+          try {
+            const imgFile = zip.file(basePath + src) || zip.file(src);
+            if (imgFile) img.setAttribute('src', await blobToDataURL(await imgFile.async('blob')));
+          } catch(e) {}
+        }
+      }
+      const title = ncxTitles[item.href] || doc.querySelector('h1,h2,h3')?.textContent?.trim() || ('Chapter ' + (epubChapters.length + 1));
+      epubChapters.push({ title, html: doc.body.innerHTML });
+    } catch(e) {}
+  }
+
+  if (!epubChapters.length) {
+    document.getElementById('epub-content-area').innerHTML = '<p style="color:var(--ink-muted);text-align:center;padding:2rem;">Could not parse this EPUB. The file format may not be supported.</p>';
+    return;
+  }
+
+  const savedIdx = parseInt(localStorage.getItem('pos_' + book.name) || '0');
+  epubCurrentIdx = Math.min(savedIdx, epubChapters.length - 1);
+  buildToc();
+  renderEpubChapter();
+}
+
+function buildToc() {
+  const list = document.getElementById('toc-list');
+  list.innerHTML = '';
+  epubChapters.forEach((ch, i) => {
+    const item = document.createElement('div');
+    item.className = 'toc-item' + (i === epubCurrentIdx ? ' active' : '');
+    item.textContent = ch.title;
+    item.addEventListener('click', () => { epubCurrentIdx = i; renderEpubChapter(); });
+    list.appendChild(item);
+  });
+}
+
+function renderEpubChapter() {
+  const area = document.getElementById('epub-content-area');
+  area.innerHTML = epubChapters[epubCurrentIdx].html;
+  area.scrollTop = 0;
+  document.getElementById('epub-progress').textContent = epubChapters[epubCurrentIdx].title;
+  document.querySelectorAll('.toc-item').forEach((el, i) => el.classList.toggle('active', i === epubCurrentIdx));
+  localStorage.setItem('pos_' + currentBook.name, epubCurrentIdx);
+}
+
+function epubPrev() { if (epubCurrentIdx > 0) { epubCurrentIdx--; renderEpubChapter(); } }
+function epubNext() { if (epubCurrentIdx < epubChapters.length - 1) { epubCurrentIdx++; renderEpubChapter(); } }
+function toggleToc() { tocOpen = !tocOpen; document.getElementById('toc-sidebar').classList.toggle('open', tocOpen); }
+function adjustFont(dir) {
+  const area = document.getElementById('epub-content-area');
+  area.classList.remove(fontSizes[fontSizeIdx]);
+  fontSizeIdx = Math.max(0, Math.min(fontSizes.length - 1, fontSizeIdx + dir));
+  area.classList.add(fontSizes[fontSizeIdx]);
+}
+
+// ===================== AUDIO =====================
+function loadAudio(book) {
+  const blob = dataURLToBlob(book.dataURL);
+  audio.src = URL.createObjectURL(blob);
+  document.getElementById('audio-title').textContent = book.title;
+  document.getElementById('audio-author').textContent = book.author || '';
+  const artEl = document.getElementById('audio-art');
+  artEl.innerHTML = book.cover ? `<img src="${book.cover}" alt="">` : '🎧';
+
+  const savedTime = parseFloat(localStorage.getItem('audiopos_' + book.name) || '0');
+  audio.addEventListener('loadedmetadata', () => {
+    if (savedTime > 0) audio.currentTime = savedTime;
+    document.getElementById('total-time').textContent = formatTime(audio.duration);
+    document.getElementById('audio-progress').max = audio.duration;
+    loadChapters();
+  }, { once: true });
+
+  audio.addEventListener('timeupdate', onTimeUpdate);
+  audio.addEventListener('ended', () => setPlayIcon(false));
+}
+
+function onTimeUpdate() {
+  const prog = document.getElementById('audio-progress');
+  prog.value = audio.currentTime;
+  document.getElementById('current-time').textContent = formatTime(audio.currentTime);
+  localStorage.setItem('audiopos_' + currentBook.name, audio.currentTime);
+  updateActiveChapter();
+}
+
+document.getElementById('audio-progress').addEventListener('input', e => { audio.currentTime = parseFloat(e.target.value); });
+
+function togglePlay() {
+  if (audio.paused) { audio.play(); setPlayIcon(true); }
+  else { audio.pause(); setPlayIcon(false); }
+}
+
+function setPlayIcon(playing) {
+  document.getElementById('play-icon').style.display = playing ? 'none' : 'block';
+  document.getElementById('pause-icon').style.display = playing ? 'block' : 'none';
+}
+
+function skip(sec) { audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + sec)); }
+
+function setSpeed(rate, btn) {
+  audio.playbackRate = rate;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function loadChapters() {
+  const list = document.getElementById('chapter-list');
+  list.innerHTML = '';
+  audioChapters = [];
+  try { await parseM4bChapters(currentBook.dataURL, list); return; } catch(e) {}
+  if (audio.duration > 0) autoChapters(list);
+}
+
+async function parseM4bChapters(dataURL, list) {
+  const base64 = dataURL.split(',')[1];
+  const chunk = Math.min(base64.length, 500000);
+  const binary = atob(base64.substring(0, chunk));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const text = new TextDecoder('latin1').decode(bytes);
+  let chapters = [];
+  const chplIdx = text.indexOf('chpl');
+  if (chplIdx !== -1 && chplIdx + 20 < bytes.length) {
+    const view = new DataView(bytes.buffer, chplIdx + 8);
+    const count = view.getUint8(4);
+    let offset = 5;
+    for (let i = 0; i < Math.min(count, 100); i++) {
+      if (offset + 9 >= view.byteLength) break;
+      const timeMs = Number(view.getBigUint64(offset)) / 10000;
+      offset += 8;
+      const nameLen = view.getUint8(offset); offset++;
+      if (offset + nameLen > view.byteLength) break;
+      const name = new TextDecoder().decode(new Uint8Array(bytes.buffer, chplIdx + 8 + offset, nameLen));
+      offset += nameLen;
+      chapters.push({ time: timeMs / 1000, title: name || ('Chapter ' + (i + 1)) });
+    }
+  }
+  if (!chapters.length) throw new Error('no chapters');
+  audioChapters = chapters;
+  renderChapterList(list, chapters);
+}
+
+function autoChapters(list) {
+  const dur = audio.duration;
+  const count = Math.min(Math.max(Math.floor(dur / 600), 1), 30);
+  const interval = dur / count;
+  const chapters = Array.from({length: count}, (_, i) => ({ time: i * interval, title: 'Chapter ' + (i + 1) }));
+  audioChapters = chapters;
+  renderChapterList(list, chapters);
+}
+
+function renderChapterList(list, chapters) {
+  chapters.forEach((ch, i) => {
+    const item = document.createElement('div');
+    item.className = 'chapter-item';
+    item.dataset.idx = i;
+    item.innerHTML = `<span>${ch.title}</span><span class="chapter-time">${formatTime(ch.time)}</span>`;
+    item.addEventListener('click', () => { audio.currentTime = ch.time; });
+    list.appendChild(item);
+  });
+}
+
+function updateActiveChapter() {
+  if (!audioChapters.length) return;
+  let active = 0;
+  for (let i = 0; i < audioChapters.length; i++) { if (audio.currentTime >= audioChapters[i].time) active = i; }
+  document.querySelectorAll('.chapter-item').forEach((el, i) => el.classList.toggle('active', i === active));
+}
+
+function toggleChapters() {
+  chaptersOpen = !chaptersOpen;
+  document.getElementById('chapter-list').style.display = chaptersOpen ? 'block' : 'none';
+  document.getElementById('chapter-toggle').textContent = (chaptersOpen ? '▾' : '▸') + ' Chapters';
+}
+
+// ===================== CLOSE READER =====================
+function closeReader() {
+  audio.pause();
+  audio.removeEventListener('timeupdate', onTimeUpdate);
+  audio.src = '';
+  epubChapters = []; epubCurrentIdx = 0;
+  document.getElementById('epub-reader').classList.add('hidden');
+  document.getElementById('audio-player').classList.add('hidden');
+  document.getElementById('reader-view').style.display = 'none';
+  document.getElementById('home-view').style.display = 'block';
+  document.getElementById('toc-sidebar').classList.remove('open');
+  document.getElementById('chapter-list').style.display = 'none';
+  chaptersOpen = false; tocOpen = false;
+  setPlayIcon(false);
+  currentBook = null;
+}
+
+// ===================== UTILS =====================
+function formatTime(s) {
+  if (!s || isNaN(s)) return '0:00';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
+}
+function stripExt(name) { return name.replace(/\.[^.]+$/, ''); }
+function readAsDataURL(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file); });
+}
+function blobToDataURL(blob) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+}
+function dataURLToBlob(dataURL) {
+  const [header, base64] = dataURL.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const bin = atob(base64);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+function saveLibrary() {
+  try { localStorage.setItem('bs_library', JSON.stringify(library)); }
+  catch(e) {
+    const slim = library.map(({dataURL, ...rest}) => rest);
+    localStorage.setItem('bs_library', JSON.stringify(slim));
+  }
+}
+function showLoading(msg) { document.getElementById('loading-text').textContent = msg; document.getElementById('loading').classList.add('active'); }
+function hideLoading() { document.getElementById('loading').classList.remove('active'); }
+</script>
+</body>
+</html>
