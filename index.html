@@ -402,9 +402,189 @@
   #epub-content-area.text-lg * { font-size: 1.25rem !important; }
   #epub-content-area.text-xl * { font-size: 1.45rem !important; }
 
+  #epub-content-area { font-size: 1rem; line-height: 1.85; }
+  #epub-content-area * { font-family: var(--reader-font-override, var(--serif)) !important; }
+
   #epub-content-area::-webkit-scrollbar { width: 4px; }
   #epub-content-area::-webkit-scrollbar-track { background: transparent; }
   #epub-content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ---- PAGED MODE ---- */
+  #epub-content-area.paged-mode {
+    overflow: hidden;
+    column-count: 1;
+    column-gap: 0;
+  }
+
+  /* ---- READER THEMES ---- */
+  body.theme-sepia { --reader-bg: #f4efe0; --reader-text: #3b2f1e; }
+  body.theme-dark  { --reader-bg: #1c1c1e; --reader-text: #d4cfc8; --paper-card: #2a2a2c; --border: #3a3a3c; --ink: #e0dbd4; --ink-muted: #9a948e; --ink-faint: #5a5450; --paper: #1c1c1e; --paper-warm: #242426; --accent-light: #3a2e28; }
+  body.theme-dark .toc-sidebar { background: #242426; }
+  body.theme-dark .epub-nav { background: #242426; }
+  body.theme-dark .reader-header { background: #242426; }
+
+  /* ---- SETTINGS DRAWER ---- */
+  .settings-drawer {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 300px;
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(26,24,20,0.14);
+    z-index: 50;
+    padding: 1.25rem;
+    display: none;
+  }
+  .settings-drawer.open { display: block; }
+
+  .settings-section {
+    margin-bottom: 1.25rem;
+  }
+  .settings-section:last-child { margin-bottom: 0; }
+
+  .settings-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 0.6rem;
+    display: block;
+  }
+
+  .settings-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+
+  /* toggle row */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .toggle-label { font-size: 0.82rem; color: var(--ink); }
+
+  .toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border);
+    border-radius: 11px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 3px;
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+
+  /* chip group */
+  .chip-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  .chip {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* font size stepper */
+  .font-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .stepper-btn {
+    width: 30px; height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-muted);
+    transition: all 0.12s;
+    flex-shrink: 0;
+  }
+  .stepper-btn:hover { background: var(--paper-warm); color: var(--ink); }
+
+  .font-size-label {
+    font-size: 0.82rem;
+    color: var(--ink);
+    min-width: 36px;
+    text-align: center;
+  }
+
+  /* line spacing slider */
+  .spacing-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    margin-top: 0.4rem;
+  }
+  .spacing-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* margin slider */
+  .margin-slider {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    margin-top: 0.4rem;
+  }
+  .margin-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  /* settings btn wrapper */
+  .settings-btn-wrap {
+    position: relative;
+  }
 
   .epub-nav {
     padding: 0.75rem 1.5rem;
@@ -604,13 +784,72 @@
       Library
     </button>
     <div class="reader-title" id="reader-title"></div>
-    <div class="font-controls" id="font-controls" style="display:none">
-      <button class="font-ctrl-btn" onclick="adjustFont(-1)">A−</button>
-      <button class="font-ctrl-btn" onclick="adjustFont(1)">A+</button>
+    <div id="epub-header-controls" style="display:none; align-items:center; gap:0.5rem;">
       <button class="btn btn-icon" onclick="toggleToc()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
         Contents
       </button>
+      <div class="settings-btn-wrap">
+        <button class="btn btn-icon" onclick="toggleSettings(event)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Display
+        </button>
+        <div class="settings-drawer" id="settings-drawer">
+          <div class="settings-section">
+            <span class="settings-label">Layout</span>
+            <div class="toggle-row">
+              <span class="toggle-label">Paginated mode</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="paged-toggle" onchange="togglePagedMode(this.checked)">
+                <div class="toggle-track"></div>
+              </label>
+            </div>
+          </div>
+          <hr class="settings-divider">
+          <div class="settings-section">
+            <span class="settings-label">Theme</span>
+            <div class="chip-group" id="theme-chips">
+              <button class="chip active" onclick="setTheme('default',this)">Default</button>
+              <button class="chip" onclick="setTheme('sepia',this)">Sepia</button>
+              <button class="chip" onclick="setTheme('dark',this)">Dark</button>
+            </div>
+          </div>
+          <hr class="settings-divider">
+          <div class="settings-section">
+            <span class="settings-label">Font</span>
+            <div class="chip-group" id="font-chips">
+              <button class="chip active" onclick="setFont('serif',this)">Serif</button>
+              <button class="chip" onclick="setFont('sans',this)">Sans-serif</button>
+              <button class="chip" onclick="setFont('mono',this)">Monospace</button>
+            </div>
+          </div>
+          <hr class="settings-divider">
+          <div class="settings-section">
+            <span class="settings-label">Font size</span>
+            <div class="font-stepper">
+              <button class="stepper-btn" onclick="adjustFontSize(-1)">&#x2212;</button>
+              <span class="font-size-label" id="font-size-display">100%</span>
+              <button class="stepper-btn" onclick="adjustFontSize(1)">+</button>
+            </div>
+          </div>
+          <hr class="settings-divider">
+          <div class="settings-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="settings-label" style="margin:0;">Line spacing</span>
+              <span style="font-size:0.75rem;color:var(--ink-muted);" id="spacing-display">1.8</span>
+            </div>
+            <input type="range" class="spacing-slider" id="spacing-slider" min="1.2" max="2.8" step="0.1" value="1.8" oninput="setLineSpacing(this.value)">
+          </div>
+          <hr class="settings-divider">
+          <div class="settings-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="settings-label" style="margin:0;">Margins</span>
+              <span style="font-size:0.75rem;color:var(--ink-muted);" id="margin-display">Medium</span>
+            </div>
+            <input type="range" class="margin-slider" id="margin-slider" min="1" max="5" step="1" value="3" oninput="setMargins(this.value)">
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -623,7 +862,7 @@
       </div>
       <div id="epub-content-area" class="text-md"></div>
     </div>
-    <div class="epub-nav">
+    <div class="epub-nav" id="epub-nav">
       <button class="btn btn-icon" onclick="epubPrev()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
         Previous
@@ -631,6 +870,17 @@
       <div class="progress-info" id="epub-progress">Chapter 1</div>
       <button class="btn btn-icon" onclick="epubNext()">
         Next
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+    <div id="page-nav" style="display:none; padding:0.75rem 1.5rem; border-top:1px solid var(--border); background:var(--paper-card); align-items:center; justify-content:space-between; gap:1rem; flex-shrink:0;">
+      <button class="btn btn-icon" onclick="pageBack()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+      <div class="progress-info" id="page-counter">Page 1</div>
+      <button class="btn btn-icon" onclick="pageForward()">
+        Forward
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
       </button>
     </div>
@@ -944,13 +1194,13 @@ async function openBook(idx) {
     document.getElementById('epub-reader').classList.remove('hidden');
     document.getElementById('epub-reader').style.display = 'flex';
     document.getElementById('audio-player').classList.add('hidden');
-    document.getElementById('font-controls').style.display = 'flex';
+    document.getElementById('epub-header-controls').style.display = 'flex';
     await loadEpub(book);
   } else {
     document.getElementById('audio-player').classList.remove('hidden');
     document.getElementById('audio-player').style.display = 'flex';
     document.getElementById('epub-reader').classList.add('hidden');
-    document.getElementById('font-controls').style.display = 'none';
+    document.getElementById('epub-header-controls').style.display = 'none';
     loadAudio(book);
   }
   hideLoading();
@@ -1019,6 +1269,7 @@ async function loadEpub(book) {
   epubCurrentIdx = Math.min(savedIdx, epubChapters.length - 1);
   buildToc();
   renderEpubChapter();
+  restoreReaderSettings();
 }
 
 function buildToc() {
@@ -1045,11 +1296,192 @@ function renderEpubChapter() {
 function epubPrev() { if (epubCurrentIdx > 0) { epubCurrentIdx--; renderEpubChapter(); } }
 function epubNext() { if (epubCurrentIdx < epubChapters.length - 1) { epubCurrentIdx++; renderEpubChapter(); } }
 function toggleToc() { tocOpen = !tocOpen; document.getElementById('toc-sidebar').classList.toggle('open', tocOpen); }
-function adjustFont(dir) {
+
+// ---- SETTINGS ----
+let settingsOpen = false;
+let readerFontSize = 100;
+let readerLineSpacing = 1.8;
+let readerMargin = 3;
+let readerFont = 'serif';
+let readerTheme = 'default';
+let pagedMode = false;
+let pagedCurrentPage = 0;
+let pagedTotalPages = 0;
+
+const marginLabels = ['Narrow','Compact','Medium','Wide','Full'];
+const fontFamilies = {
+  serif: "'Lora', Georgia, serif",
+  sans: "'DM Sans', system-ui, sans-serif",
+  mono: "'Courier New', Courier, monospace"
+};
+
+function toggleSettings(e) {
+  e.stopPropagation();
+  settingsOpen = !settingsOpen;
+  document.getElementById('settings-drawer').classList.toggle('open', settingsOpen);
+}
+
+document.addEventListener('click', (e) => {
+  if (settingsOpen && !e.target.closest('.settings-btn-wrap')) {
+    settingsOpen = false;
+    document.getElementById('settings-drawer').classList.remove('open');
+  }
+});
+
+function setTheme(theme, btn) {
+  document.querySelectorAll('#theme-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.body.classList.remove('theme-sepia','theme-dark');
+  if (theme !== 'default') document.body.classList.add('theme-' + theme);
+  readerTheme = theme;
+  localStorage.setItem('bs_theme', theme);
+}
+
+function setFont(font, btn) {
+  document.querySelectorAll('#font-chips .chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  readerFont = font;
+  applyFontToArea();
+  localStorage.setItem('bs_font', font);
+}
+
+function applyFontToArea() {
   const area = document.getElementById('epub-content-area');
-  area.classList.remove(fontSizes[fontSizeIdx]);
-  fontSizeIdx = Math.max(0, Math.min(fontSizes.length - 1, fontSizeIdx + dir));
-  area.classList.add(fontSizes[fontSizeIdx]);
+  area.style.setProperty('--reader-font-override', fontFamilies[readerFont]);
+}
+
+function adjustFontSize(dir) {
+  readerFontSize = Math.max(70, Math.min(160, readerFontSize + dir * 10));
+  document.getElementById('font-size-display').textContent = readerFontSize + '%';
+  document.getElementById('epub-content-area').style.fontSize = (readerFontSize / 100) + 'rem';
+  localStorage.setItem('bs_fontsize', readerFontSize);
+  if (pagedMode) recalcPages();
+}
+
+function setLineSpacing(val) {
+  readerLineSpacing = parseFloat(val);
+  document.getElementById('spacing-display').textContent = readerLineSpacing.toFixed(1);
+  document.getElementById('epub-content-area').style.lineHeight = readerLineSpacing;
+  localStorage.setItem('bs_spacing', readerLineSpacing);
+  if (pagedMode) recalcPages();
+}
+
+function setMargins(val) {
+  readerMargin = parseInt(val);
+  const marginMap = ['1rem','2rem','4rem','6rem','8rem'];
+  const marginVal = marginMap[readerMargin - 1];
+  document.getElementById('margin-display').textContent = marginLabels[readerMargin - 1];
+  const area = document.getElementById('epub-content-area');
+  area.style.paddingLeft = marginVal;
+  area.style.paddingRight = marginVal;
+  localStorage.setItem('bs_margin', readerMargin);
+  if (pagedMode) recalcPages();
+}
+
+function togglePagedMode(on) {
+  pagedMode = on;
+  const area = document.getElementById('epub-content-area');
+  const nav = document.getElementById('epub-nav');
+  const pageNav = document.getElementById('page-nav');
+  if (on) {
+    area.classList.add('paged-mode');
+    area.style.overflow = 'hidden';
+    if (nav) nav.style.display = 'none';
+    if (pageNav) pageNav.style.display = 'flex';
+    recalcPages();
+  } else {
+    area.classList.remove('paged-mode');
+    area.style.overflow = 'auto';
+    area.style.columnCount = '';
+    if (nav) nav.style.display = '';
+    if (pageNav) pageNav.style.display = 'none';
+    area.scrollTop = 0;
+  }
+  localStorage.setItem('bs_paged', on ? '1' : '0');
+}
+
+function recalcPages() {
+  const area = document.getElementById('epub-content-area');
+  const areaH = area.clientHeight;
+  const scrollH = area.scrollHeight;
+  pagedTotalPages = Math.max(1, Math.ceil(scrollH / areaH));
+  pagedCurrentPage = 0;
+  area.scrollTop = 0;
+  updatePageCounter();
+}
+
+function pageForward() {
+  const area = document.getElementById('epub-content-area');
+  if (pagedCurrentPage < pagedTotalPages - 1) {
+    pagedCurrentPage++;
+    area.scrollTop = pagedCurrentPage * area.clientHeight;
+    updatePageCounter();
+  } else { epubNext(); }
+}
+
+function pageBack() {
+  const area = document.getElementById('epub-content-area');
+  if (pagedCurrentPage > 0) {
+    pagedCurrentPage--;
+    area.scrollTop = pagedCurrentPage * area.clientHeight;
+    updatePageCounter();
+  } else { epubPrev(); }
+}
+
+function updatePageCounter() {
+  const el = document.getElementById('page-counter');
+  if (el) el.textContent = 'Page ' + (pagedCurrentPage + 1) + ' of ' + pagedTotalPages;
+}
+
+function restoreReaderSettings() {
+  const savedTheme = localStorage.getItem('bs_theme') || 'default';
+  const savedFont = localStorage.getItem('bs_font') || 'serif';
+  const savedSize = parseInt(localStorage.getItem('bs_fontsize') || '100');
+  const savedSpacing = parseFloat(localStorage.getItem('bs_spacing') || '1.8');
+  const savedMargin = parseInt(localStorage.getItem('bs_margin') || '3');
+  const savedPaged = localStorage.getItem('bs_paged') === '1';
+
+  // Theme
+  if (savedTheme !== 'default') {
+    document.body.classList.add('theme-' + savedTheme);
+    document.querySelectorAll('#theme-chips .chip').forEach(c => {
+      c.classList.toggle('active', c.textContent.toLowerCase() === savedTheme);
+    });
+  }
+  readerTheme = savedTheme;
+
+  // Font
+  readerFont = savedFont;
+  document.querySelectorAll('#font-chips .chip').forEach(c => {
+    const map = {'Serif':'serif','Sans-serif':'sans','Monospace':'mono'};
+    c.classList.toggle('active', map[c.textContent] === savedFont);
+  });
+  applyFontToArea();
+
+  // Size
+  readerFontSize = savedSize;
+  document.getElementById('font-size-display').textContent = savedSize + '%';
+  document.getElementById('epub-content-area').style.fontSize = (savedSize / 100) + 'rem';
+
+  // Spacing
+  readerLineSpacing = savedSpacing;
+  document.getElementById('spacing-slider').value = savedSpacing;
+  document.getElementById('spacing-display').textContent = savedSpacing.toFixed(1);
+  document.getElementById('epub-content-area').style.lineHeight = savedSpacing;
+
+  // Margins
+  readerMargin = savedMargin;
+  document.getElementById('margin-slider').value = savedMargin;
+  document.getElementById('margin-display').textContent = marginLabels[savedMargin - 1];
+  const marginMap = ['1rem','2rem','4rem','6rem','8rem'];
+  document.getElementById('epub-content-area').style.paddingLeft = marginMap[savedMargin - 1];
+  document.getElementById('epub-content-area').style.paddingRight = marginMap[savedMargin - 1];
+
+  // Paged
+  if (savedPaged) {
+    document.getElementById('paged-toggle').checked = true;
+    setTimeout(() => togglePagedMode(true), 100);
+  }
 }
 
 // ===================== AUDIO =====================
